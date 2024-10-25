@@ -1,0 +1,121 @@
+create database Q1;
+use Q1;
+
+-- Create Time Dimension Table
+CREATE TABLE Time_Dim (
+    time_id INT PRIMARY KEY,
+    year INT,
+    quarter VARCHAR(10),
+    month VARCHAR(10),
+    day INT
+);
+
+-- Create Item Dimension Table
+CREATE TABLE Item_Dim (
+    item_id INT PRIMARY KEY,
+    item_name VARCHAR(100),
+    category VARCHAR(100),
+    brand VARCHAR(100)
+);
+
+-- Create Branch Dimension Table
+CREATE TABLE Branch_Dim (
+    branch_id INT PRIMARY KEY,
+    branch_name VARCHAR(100),
+    manager VARCHAR(100)
+);
+
+-- Create Location Dimension Table
+CREATE TABLE Location_Dim (
+    location_id INT PRIMARY KEY,
+    city VARCHAR(100),
+    state VARCHAR(100),
+    country VARCHAR(100)
+);
+
+-- Create Sales Fact Table
+CREATE TABLE Sales_Fact (
+    sales_id INT PRIMARY KEY,
+    time_id INT,
+    item_id INT,
+    branch_id INT,
+    location_id INT,
+    dollars_sold DECIMAL(10, 2),
+    units_sold INT,
+    FOREIGN KEY (time_id) REFERENCES Time_Dim(time_id),
+    FOREIGN KEY (item_id) REFERENCES Item_Dim(item_id),
+    FOREIGN KEY (branch_id) REFERENCES Branch_Dim(branch_id),
+    FOREIGN KEY (location_id) REFERENCES Location_Dim(location_id)
+);
+
+
+-- Insert Data into Time Dimension Table
+INSERT INTO Time_Dim (time_id, year, quarter, month, day) VALUES
+(1, 2024, 'Q1', 'January', 15),
+(2, 2024, 'Q1', 'February', 20),
+(3, 2024, 'Q2', 'April', 12);
+
+-- Insert Data into Item Dimension Table
+INSERT INTO Item_Dim (item_id, item_name, category, brand) VALUES
+(1, 'Laptop', 'Electronics', 'Dell'),
+(2, 'Smartphone', 'Electronics', 'Apple'),
+(3, 'Tablet', 'Electronics', 'Samsung');
+
+-- Insert Data into Branch Dimension Table
+INSERT INTO Branch_Dim (branch_id, branch_name, manager) VALUES
+(1, 'Central Branch', 'John Doe'),
+(2, 'East Branch', 'Jane Smith');
+
+-- Insert Data into Location Dimension Table
+INSERT INTO Location_Dim (location_id, city, state, country) VALUES
+(1, 'New York', 'NY', 'USA'),
+(2, 'San Francisco', 'CA', 'USA');
+
+-- Insert Data into Sales Fact Table
+INSERT INTO Sales_Fact (sales_id, time_id, item_id, branch_id, location_id, dollars_sold, units_sold) VALUES
+(1, 1, 1, 1, 1, 1000.00, 5),
+(2, 2, 2, 2, 2, 1500.00, 10),
+(3, 3, 3, 1, 2, 1200.00, 8);
+
+
+-- Display Time Dimension Table
+SELECT * FROM Time_Dim;
+
+-- Display Item Dimension Table
+SELECT * FROM Item_Dim;
+
+-- Display Branch Dimension Table
+SELECT * FROM Branch_Dim;
+
+-- Display Location Dimension Table
+SELECT * FROM Location_Dim;
+
+-- Display Sales Fact Table
+SELECT * FROM Sales_Fact;
+
+-- Roll-up: Aggregate sales by month (from day)
+SELECT T.month, SUM(S.dollars_sold) AS total_sales, SUM(S.units_sold) AS total_units
+FROM Sales_Fact S
+JOIN Time_Dim T ON S.time_id = T.time_id
+GROUP BY T.month;
+
+-- Roll-up: Aggregate sales by quarter (from month)
+SELECT T.quarter, SUM(S.dollars_sold) AS total_sales, SUM(S.units_sold) AS total_units
+FROM Sales_Fact S
+JOIN Time_Dim T ON S.time_id = T.time_id
+GROUP BY T.quarter;
+
+-- Drill-down: Show daily sales for a specific month (January)
+SELECT T.day, SUM(S.dollars_sold) AS total_sales, SUM(S.units_sold) AS total_units
+FROM Sales_Fact S
+JOIN Time_Dim T ON S.time_id = T.time_id
+WHERE T.month = 'January'
+GROUP BY T.day;
+
+-- Drill-down: Show sales by item category
+SELECT I.category, SUM(S.dollars_sold) AS total_sales, SUM(S.units_sold) AS total_units
+FROM Sales_Fact S
+JOIN Item_Dim I ON S.item_id = I.item_id
+GROUP BY I.category;
+
+
